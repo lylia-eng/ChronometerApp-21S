@@ -1,0 +1,414 @@
+<html lang="en">
+<head>
+<title>Chronometer Competition Ranking</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* * {
+  box-sizing: border-box;
+} */
+
+/* Style the body */
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #2C3531;
+  background-image: url('https://www.vippng.com/png/full/361-3612977_website-background-png-tech-background-image-for-website.png');
+  /* backdrop-filter: blur(1px); */
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* Header/logo Title */
+.header {
+  padding: 20px 10px 20px 10px;
+  margin: 20px 20px 10px 20px;
+  text-align: center;
+  /* background: rgb(17, 100, 102, 0.5); */
+  color: white;
+  /* text-shadow: 2px 2px 2px gray; */
+  font-weight: bold;
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+/* Increase the font size of the heading */
+.header h1 {
+  font-size: 45px;
+  color: #D9b08c
+}
+
+.stack {
+  display: flex;
+  flex-direction: row;
+  margin-left: 20px;
+  margin-right: 20px
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  width: 40%;
+  text-align: center;
+}
+
+.rank {
+  letter-spacing: 1px;
+  font-size: large;
+  color: white;
+}
+
+.card {
+  box-shadow: 0 2px 2px 0 rgba(0,0,0,0.5);
+  transition: 0.3s;
+  margin: 6px;
+  color: black;
+  background: #d1e8e2;
+  border-radius: 6px;
+}
+
+.cardHeader {
+  background-color: rgb(217, 176, 140);
+  border-radius: 6px 6px 0px 0px;
+  text-align: center;
+  letter-spacing: 1px;
+  font-size: large;
+}
+
+.cardHeaderText {
+  text-align: center;
+  font-weight: bold;
+  padding: 15px 5px 15px 5px;
+  color: black;
+}
+
+.cardBody {
+ padding: 10px;
+ text-align: center;
+ background: rgb(17, 100, 102);
+ color: white;
+ border-radius: 0px 0px 6px 6px;
+ letter-spacing: 1px;
+}
+
+.cardBody h5{
+ padding-top: 10px;
+ letter-spacing: 0px;
+ margin: 0;
+ font-size: medium;
+ color:  rgb(255, 205, 162);
+}
+
+/* .cardFooter {
+  color: white;
+  background: rgb(17, 100, 102);
+}
+
+.cardFooter h5{
+ padding-top: 10px;
+ margin: 0;
+ font-size: medium;
+} */
+
+.card:hover {
+  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.5);
+}
+
+.footer {
+  margin-top: 20px;
+  margin-left: 20px;
+}
+
+.a {
+  color: white;
+}
+
+/* Responsive layout - when the screen is less than 700px wide, make the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 700px) {
+  .row {
+    flex-direction: column;
+  }
+}
+
+/* Responsive layout - when the screen is less than 400px wide, make the navigation links stack on top of each other instead of next to each other */
+@media screen and (max-width: 400px) {
+  .navbar a {
+    float: none;
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+<script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+<script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+
+<script type="text/javascript" language="javascript">
+
+const sheetAPIkey = 'AIzaSyCaUJ1qeBIuwxaCPE1Wabwq8zSoBLPzl6s';
+const sheetId = '1uXklKUKO7-9wfPxUY5rTtAtd5EY68lX0AZpzGpHLiYY';
+const sheetURL = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/sheet1?key=${sheetAPIkey}`
+const googleScriptURL = 'https://script.google.com/macros/s/AKfycbwUnhRNj6wR_zFbhj7jV4ZZxxa7RSUyzAgRAiC3qhYPjuvqLmDPHsudSxnoxI9gxiqW/exec?callback=?';
+let count = 0;
+
+let state = { 41 : {}, 23: {}, 75: {}, 68:{}}; // independent of # groups
+let groupScores = [
+{group : 41, groupScore : 0},
+{group : 23, groupScore : 0},
+{group : 75, groupScore : 0},
+{group : 68, groupScore : 0}
+]; // index is NOT group #
+let ranking = [];
+
+const sheetHeaders = ["Timestamp", "Name", "Group #", "Pulses", "Pulse length", "Avg Pulse length", "P", "Score"]; // don't change this order
+const emptyStudentRow = [0,0,0,0,0,0,0,0];
+
+function mount(num) {
+  getMyAPI();
+  let counter = document.getElementById("count")
+  let int = self.setInterval(function () {
+    try {
+    newcount = count + 1;
+    counter.innerHTML = counter.innerHTML.replace(count, newcount);
+    count = newcount;
+    getMyAPI();
+    } catch(e) {
+      console.log(e);
+    }
+}, 3000);
+}
+
+// data format is [group][student][column]
+function getMyAPI() {
+  $.getJSON(googleScriptURL, function(data) {
+    try {
+      console.log(data)
+      for (i = 0; i < data.length; i++) {
+          let group = data[i]
+          // for each student
+          for (j = 0; j < group.length; j++){
+            let student = group[j];
+            let groupNum = student[2];
+            let studentName = student[1];
+            let studentScore = student[student.length-1];
+
+            state = {
+                ...state,
+                [groupNum] : {
+                    ...state[groupNum],
+                    [studentName] : student,
+                }
+            }
+          }
+          // cannot calculate group scores here by adding to group score bc would be double/x counting
+        }
+    } catch(e){
+      console.log(e);
+    }
+})
+
+// iterate thru state to sum score after getting new rows
+for (let [group, studentList] of Object.entries(state)) {
+    let groupScore = 0; // wipe previous, now getting all updated scores from state
+
+    if ( group !== 'undefined') {
+      let students = {};
+
+      for (let [student, data] of Object.entries(studentList)) {
+        groupScore += data[data.length - 2];
+
+        students = {
+          ...students,
+          [student] : data[data.length - 2]
+        }
+      }
+      // group string "1"
+      // parseInt(group)
+      // parseInt(group) -> 1
+      // using 1 to index into the array groupScores
+      // assumption is that position of the group == group #
+      // in Lylia's case, group 23 (position 0), 46 (position 1), 78 (position 2)
+      // dictionaries {}
+      const groupTo2021Map = {
+        41 : 0,
+        23 : 1,
+        75 : 2,
+        68 : 3
+      }
+      groupScores[groupTo2021Map[parseInt(group)]] = {group : parseInt(group), groupScore : groupScore, students};
+    }
+    else {
+      // console.log("group " + group + " undefined")
+    }
+}
+
+groupScores.sort(function (a, b) {
+    return b.groupScore - a.groupScore;
+});
+
+console.log("state", state);
+console.log("group scores: ", groupScores)
+
+// group_X = the #X group
+// score_X = score of #X group
+// student_X_1 = score of student 1 in #X group
+// name_X_1 = name of student 1 in #X group
+
+for (i = 0; i < groupScores.length; i++) {
+  let groupInfo = groupScores[i];
+
+  let num = groupScores[i].group;
+  let groupNumString = 'group_' + num;
+  let groupScoreString = 'score_' + num;
+  let studentScoreString = 'student_' + num + "_0";
+  let studentNameString = 'name_' + num + "_0"
+
+  let s = 0;
+  // console.log("group student", groupInfo.students)
+  for (let [studentName, studentScore] of Object.entries(groupInfo.students)) {
+    s += 1;
+    studentScoreString = studentScoreString.slice(0, -1) + s.toString();
+    studentNameString = studentNameString.slice(0, -1) + s.toString();
+    // console.log("studentscorestring", studentScoreString)
+    // console.log("studentNameString", studentNameString)
+    // console.log("score of student " + s + ": " + data[data.length - 1]);
+
+    console.log(studentNameString, studentScoreString)
+    document.getElementById(studentNameString).innerHTML = studentName + ":";
+    console.log(studentScoreString)
+    document.getElementById(studentScoreString).innerHTML = studentScore.toFixed(2);
+  }
+  console.log(groupInfo.groupScore.toFixed(2))
+  document.getElementById(groupNumString).innerHTML = "Group " + groupInfo.group;
+  document.getElementById(groupScoreString).innerHTML = groupInfo.groupScore.toFixed(2);
+
+}
+
+// Google sheet queries
+// =array_Constrain(sort(sortn(sort(ArrayFormula({'Form Responses 3'!A2:I,if(len(A2:A),row(A2:A),"")}),8,false),9^9,2,3,false),8,TRUE),counta(A2:A),9)
+// =query('Form Responses 3'!L:T,"select L, M, N, O, P, Q, R, S, T where O = 1")
+}
+</script>
+
+<body onload="mount(123); getMyAPI()">
+
+<div class="header">
+  <h1>Chronometer Competition Ranking: Live Scores</h1>
+  <p>Please wait 5 seconds to load initial data when first visiting this page.</p>
+  <p id="count">API calls: 0</p>
+</div>
+
+<div class="stack">
+  <div class="container">
+    <div class="rank">Group 41</div>
+    <div class="card">
+
+        <div class="cardHeader">
+          <div class="cardHeaderText" id="group_41"></div>
+        </div>
+
+        <div class="cardBody">
+          <h5> Score Sum: </h5>
+          <b><p id="score_41"></p></b>
+
+          <h5> Individual Scores: </h5>
+          <u><p id="name_41_1"></p></u>
+          <p id="student_41_1"></p>
+          <u><p id="name_41_2"></p></u>
+          <p id="student_41_2"></p>
+          <u><p id="name_41_3"></p></u>
+          <p id="student_41_3"></p>
+          <u><p id="name_41_4"></p></u>
+          <p id="student_41_4"></p>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="rank">Group 23</div>
+    <div class="card">
+
+        <div class="cardHeader">
+          <div class="cardHeaderText" id="group_23"></div>
+        </div>
+
+        <div class="cardBody">
+          <h5> Score Sum: </h5>
+          <b><p id="score_23"></p></b>
+
+          <h5> Individual Scores: </h5>
+          <u><p id="name_23_1"></p></u>
+          <p id="student_23_1"></p>
+          <u><p id="name_23_2"></p></u>
+          <p id="student_23_2"></p>
+          <u><p id="name_23_3"></p></u>
+          <p id="student_23_3"></p>
+          <u><p id="name_23_4"></p></u>
+          <p id="student_23_4"></p>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="rank">Group 75</div>
+    <div class="card">
+
+        <div class="cardHeader">
+          <div class="cardHeaderText" id="group_75"></div>
+        </div>
+
+        <div class="cardBody">
+          <h5> Score Sum: </h5>
+          <b><p id="score_75"></p></b>
+
+          <h5> Individual Scores: </h5>
+          <u><p id="name_75_1"></p></u>
+          <p id="student_75_1"></p>
+          <u><p id="name_75_2"></p></u>
+          <p id="student_75_2"></p>
+          <u><p id="name_75_3"></p></u>
+          <p id="student_75_3"></p>
+          <u><p id="name_75_4"></p></u>
+          <p id="student_75_4"></p>
+        </div>
+
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="rank">Group 68</div>
+    <div class="card">
+
+        <div class="cardHeader">
+          <div class="cardHeaderText" id="group_68"></div>
+        </div>
+
+        <div class="cardBody">
+          <h5> Score Sum: </h5>
+          <b><p id="score_68"></p></b>
+
+          <h5> Individual Scores: </h5>
+          <u><p id="name_68_1"></p></u>
+          <p id="student_68_1"></p>
+          <u><p id="name_68_2"></p></u>
+          <p id="student_68_2"></p>
+          <u><p id="name_68_3"></p></u>
+          <p id="student_68_3"></p>
+          <u><p id="name_68_4"></p></u>
+          <p id="student_68_4"></p>
+        </div>
+
+    </div>
+  </div>
+</div>
+<div class="footer">
+    <a href="https://github.com/slbian/ChronometerApp" style="color:white">check out the struggle on github</a>
+</div>
+
+</body>
+</html>
